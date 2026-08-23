@@ -11,13 +11,17 @@ public class EventEntity : BaseEntity {
     public DateTime Date { get; set; }
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
-    public string? BannerImageUrl { get; set; }
+    public Guid? BannerImageId { get; set; }
     public int MaxCapacity { get; set; }
     public decimal TicketPrice { get; set; }
     public int AvailableTickets { get; set; }
     public bool IsPublished { get; set; }
+    public bool AllowCancellation { get; set; } = true;
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 
     public Category? Category { get; set; }
     public User? Organizer { get; set; }
+    public Image? BannerImage { get; set; }
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

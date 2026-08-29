@@ -1,4 +1,24 @@
 services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ticket-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SQL_SERVER_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - ticket-network
+    restart: unless-stopped
+
   api:
     build:
       context: .
@@ -9,6 +29,27 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=TicketManagementDB;User Id=sa;Password=${SQL_SERVER_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=True
+      - AppSettings__FrontendUrl=${FRONTEND_URL:-http://localhost:4200}
+      - Jwt__SigningKey=${JWT_SECRET_KEY}
+      - Jwt__Issuer=TicketManagement
+      - Jwt__Audience=TicketManagement
+      - Supabase__Url=${SUPABASE_URL}
+      - Supabase__ServiceRoleKey=${SUPABASE_SERVICE_ROLE_KEY}
+      - Supabase__Bucket=${SUPABASE_BUCKET}
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET:-}
+      - Stripe__Currency=usd
+      - Email__Host=${EMAIL_HOST:-}
+      - Email__Port=${EMAIL_PORT:-587}
+      - Email__User=${EMAIL_USER:-}
+      - Email__Password=${EMAIL_PASSWORD:-}
+      - Email__From=${EMAIL_FROM:-}
+      - Seed__AdminEmail=${ADMIN_EMAIL:-admin@tickets.local}
+      - Seed__AdminPassword=${ADMIN_PASSWORD:-}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -18,6 +59,9 @@ services:
     networks:
       - ticket-network
     restart: unless-stopped
+
+volumes:
+  sqlserver-data:
 
 networks:
   ticket-network:

@@ -1,10 +1,10 @@
-using System.Security.Claims;
 using Application.Features.Auth.Commands;
 using Application.Features.Users.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Contracts.Auth;
+using Presentation.Extensions;
 
 namespace Presentation.Controllers;
 
@@ -113,7 +113,7 @@ public sealed class AuthController : ControllerBase {
         CancellationToken cancellationToken) {
         await _sender.Send(
             new ChangePasswordCommand(
-                GetUserId(),
+                User.GetUserId(),
                 request.CurrentPassword,
                 request.NewPassword,
                 request.ConfirmNewPassword),
@@ -126,18 +126,9 @@ public sealed class AuthController : ControllerBase {
     [HttpGet("me")]
     public async Task<IActionResult> Me(CancellationToken cancellationToken) {
         var result = await _sender.Send(
-            new GetCurrentUserQuery(GetUserId()),
+            new GetCurrentUserQuery(User.GetUserId()),
             cancellationToken);
 
         return Ok(result);
-    }
-
-    private Guid GetUserId() {
-        var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(value, out var userId)) {
-            throw new UnauthorizedAccessException("The access token has no user id.");
-        }
-
-        return userId;
     }
 }

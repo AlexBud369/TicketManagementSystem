@@ -92,18 +92,8 @@ public static class DependencyInjection {
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<LoggingEmailService>();
         services.AddScoped<SmtpEmailService>();
-        services.AddScoped<IEmailService>(serviceProvider => {
-            var email = serviceProvider
-                .GetRequiredService<IOptions<EmailOptions>>()
-                .Value;
-
-            if (string.IsNullOrWhiteSpace(email.Host) ||
-                string.IsNullOrWhiteSpace(email.From)) {
-                return serviceProvider.GetRequiredService<LoggingEmailService>();
-            }
-
-            return serviceProvider.GetRequiredService<SmtpEmailService>();
-        });
+        services.AddScoped<IEmailService>(serviceProvider =>
+            serviceProvider.GetRequiredService<LoggingEmailService>());
 
         services.AddHttpClient<IStorageService, SupabaseStorageService>((serviceProvider, client) => {
             var supabase = serviceProvider

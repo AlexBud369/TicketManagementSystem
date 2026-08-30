@@ -20,6 +20,8 @@ public sealed class LoggingEmailService : IEmailService {
             userName,
             toEmail,
             confirmationLink);
+        WriteMailLink("Confirmation link", confirmationLink);
+        WriteConfirmEmailJson(confirmationLink);
 
         return Task.CompletedTask;
     }
@@ -32,6 +34,8 @@ public sealed class LoggingEmailService : IEmailService {
             "Password reset email for <{Email}>. Reset link: {Link}",
             toEmail,
             resetLink);
+        WriteMailLink("Reset link", resetLink);
+        WriteResetPasswordJson(resetLink);
 
         return Task.CompletedTask;
     }
@@ -80,5 +84,48 @@ public sealed class LoggingEmailService : IEmailService {
             eventTitle);
 
         return Task.CompletedTask;
+    }
+
+    private static void WriteMailLink(string label, string link) {
+        Console.Error.WriteLine($"[MAIL] {label}: {link}");
+    }
+
+    private static void WriteConfirmEmailJson(string confirmationLink) {
+        if (!TryReadQuery(confirmationLink, out var email, out var token)) {
+            return;
+        }
+
+        Console.Error.WriteLine(
+            $"[MAIL] POST /api/auth/confirm-email JSON: {{\"email\":\"{email}\",\"token\":\"{token}\"}}");
+    }
+
+    private static void WriteResetPasswordJson(string resetLink) {
+        if (!TryReadQuery(resetLink, out var email, out var token)) {
+            return;
+        }
+
+        Console.Error.WriteLine(
+            $"[MAIL] POST /api/auth/reset-password JSON: {{\"email\":\"{email}\",\"token\":\"{token}\",\"newPassword\":\"YourNewPassword1!\",\"confirmNewPassword\":\"YourNewPassword1!\"}}");
+    }
+
+    private static bool TryReadQuery(
+        string link,
+        out string email,
+        out string token) {
+        email = string.Empty;
+        token = string.Empty;
+
+        const string tokenKey = "token=";
+        const string emailKey = "&email=";
+        var tokenStart = link.IndexOf(tokenKey, StringComparison.Ordinal);
+        var emailStart = link.IndexOf(emailKey, StringComparison.Ordinal);
+        if (tokenStart < 0 || emailStart < 0 || emailStart <= tokenStart) {
+            return false;
+        }
+
+        token = Uri.UnescapeDataString(
+            link[(tokenStart + tokenKey.Length)..emailStart]);
+        email = Uri.UnescapeDataString(link[(emailStart + emailKey.Length)..]);
+        return token.Length > 0 && email.Length > 0;
     }
 }

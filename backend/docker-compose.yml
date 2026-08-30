@@ -29,6 +29,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_HTTP_PORTS=8080
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=TicketManagementDB;User Id=sa;Password=${SQL_SERVER_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=True
       - AppSettings__FrontendUrl=${FRONTEND_URL:-http://localhost:4200}
       - Jwt__SigningKey=${JWT_SECRET_KEY}
@@ -37,8 +39,8 @@ services:
       - Supabase__Url=${SUPABASE_URL}
       - Supabase__ServiceRoleKey=${SUPABASE_SERVICE_ROLE_KEY}
       - Supabase__Bucket=${SUPABASE_BUCKET}
-      - Stripe__SecretKey=${STRIPE_SECRET_KEY:-}
-      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET:-}
+      - Stripe__SecretKey=${Stripe__SecretKey:-${STRIPE_SECRET_KEY:-}}
+      - Stripe__WebhookSecret=${Stripe__WebhookSecret:-${STRIPE_WEBHOOK_SECRET:-}}
       - Stripe__Currency=usd
       - Email__Host=${EMAIL_HOST:-}
       - Email__Port=${EMAIL_PORT:-587}
@@ -58,6 +60,11 @@ services:
       start_period: 15s
     networks:
       - ticket-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 volumes:

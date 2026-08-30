@@ -124,11 +124,13 @@ public sealed class PasswordService : IPasswordService {
     }
 
     private static string DecodeToken(string token) {
+        var normalized = Uri.UnescapeDataString(token.Trim()).Replace(' ', '+');
+
         try {
-            return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+            return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(normalized));
         }
         catch (FormatException) {
-            return token;
+            return normalized;
         }
     }
 }

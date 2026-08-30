@@ -196,3 +196,10 @@ PublishScripts/
 csx/
 *.build.csdef
 ScaffoldingReadMe.txt
+
+
+#Seed data helpers
+DemoDataSeeder.cs
+DemoSeedResult.cs
+seed-demo-data.ps1
+DevSeedController.cs
